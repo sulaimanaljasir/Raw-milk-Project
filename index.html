@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Raw Milk Project - Qassim University</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --qu-primary: #2563EB;
+            --qu-secondary: #60A5FA;
+            --qu-dark: #1E40AF;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #f7f9fc;
+            line-height: 1.6;
+        }
+        .header {
+            background: linear-gradient(135deg, var(--qu-primary), var(--qu-dark));
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            padding: 30px;
+            margin-bottom: 20px;
+        }
+        .form-group { margin-bottom: 20px; }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        input[type="text"],
+        input[type="password"],
+        input[type="number"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 14px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 16px;
+        }
+        button {
+            background: var(--qu-primary);
+            color: white;
+            padding: 14px 28px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        button:hover { background: var(--qu-dark); }
+        button:disabled {
+            background: #cbd5e0;
+            cursor: not-allowed;
+        }
+        .btn-success { background: #38a169; }
+        .btn-success:hover { background: #2f855a; }
+        .btn-secondary { background: var(--qu-secondary); }
+        .btn-danger { background: #e53e3e; }
+        .photo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .photo-item {
+            position: relative;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 2px solid #e2e8f0;
+        }
+        .photo-item img {
+            width: 100%;
+            height: 100px;
+            object-fit: cover;
+            display: block;
+        }
+        .photo-item .remove-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: #e53e3e;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            font-size: 16px;
+            line-height: 1;
+            padding: 0;
+        }
+        input[type="file"] { display: none; }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            align-items: center;
+            justify-content: center;
+        }
+        .modal.show {
+            display: flex !important;
+        }
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 16px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+        }
+        .sample-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .sample-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .tab-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        .tab {
+            background: transparent;
+            color: #718096;
+            padding: 12px 24px;
+            border: none;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+        }
+        .tab.active {
+            color: var(--qu-primary);
+            border-bottom-color: var(--qu-primary);
+        }
+        .view { display: none; }
+        .view.active { display: block; }
+        .alert {
+            padding: 14px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        .alert-success {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+        .alert-error {
+            background: #fed7d7;
+            color: #742a2a;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Raw Milk Project</h1>
+        <p>One Health Laboratory - Qassim University</p>
+    </div>
+
+    <!-- Login -->
+    <div id="loginView">
+        <div class="container">
+            <div class="card" style="max-width: 450px; margin: 40px auto;">
+                <h2 style="color: var(--qu-primary); margin-bottom: 25px;">Login</h2>
+                <div id="loginAlert"></div>
+                <form onsubmit="return handleLogin(event);">
+                    <div class="form-group">
+                        <label>Username</label>
+                        <input type="text" id="loginUsername" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Password</label>
+                        <input type="password" id="loginPassword" required>
+                    </div>
+                    <button type="submit" style="width: 100%;">Login</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- App -->
+    <div id="appView" style="display: none;">
+        <div class="container">
+            <div style="background: var(--qu-primary); color: white; padding: 15px; border-radius: 10px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+                <span id="userName"></span>
+                <button onclick="handleLogout()" class="btn-danger">Logout</button>
+            </div>
+
+            <div class="card">
+                <div class="tab-container">
+                    <button class="tab active" onclick="switchTab(event, 'collect')">📝 Collect</button>
+                    <button class="tab" onclick="switchTab(event, 'samples')">📊 Samples</button>
+                    <button class="tab" id="settingsTab" onclick="switchTab(event, 'settings')" style="display:none;">⚙️ Settings</button>
+                </div>
+
+                <!-- Collect View -->
+                <div id="collectView" class="view active">
+                    <h2 style="color: var(--qu-primary);">New Sample</h2>
+                    <form id="sampleForm" onsubmit="return false;">
+                        <div class="form-group">
+                            <label>Sample ID</label>
+                            <input type="text" id="sampleId" readonly style="background: #f7f9fc; font-weight: bold; color: var(--qu-primary);">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Animal Type *</label>
+                            <select id="animalType" required>
+                                <option value="">Select</option>
+                                <option value="Camel">Camel</option>
+                                <option value="Sheep">Sheep</option>
+                                <option value="Goat">Goat</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Source Type *</label>
+                            <select id="sourceType" required>
+                                <option value="">Select</option>
+                                <option value="Farm">Farm</option>
+                                <option value="Free-ranging">Free-ranging</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Health Status *</label>
+                            <select id="healthStatus" required>
+                                <option value="">Select</option>
+                                <option value="Healthy">Healthy</option>
+                                <option value="Diseased">Diseased</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Notes</label>
+                            <textarea id="notes" rows="3"></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Photos (1-5 photos) *</label>
+                            <p style="color: #718096; font-size: 13px; margin-bottom: 10px;">Take 3-5 photos for better verification</p>
+                            <input type="file" id="photoInput" accept="image/*" capture="environment" multiple>
+                            <button type="button" onclick="openCamera()">📸 Take Photos</button>
+                            <div id="photoPreview" class="photo-grid"></div>
+                            <p id="photoCount" style="margin-top: 8px; font-size: 13px; color: var(--qu-primary);"></p>
+                        </div>
+
+                        <div class="form-group">
+                            <label>GPS Location *</label>
+                            <p style="color: #718096; font-size: 13px; margin-bottom: 10px;">GPS accuracy: 100m or better. Offline mode available.</p>
+                            <button type="button" id="gpsBtn" onclick="captureGPS()">📍 Capture GPS</button>
+                            <div id="gpsInfo" style="display:none; margin-top:10px; padding:10px; background:#c6f6d5; border-radius:8px;"></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Date & Time</label>
+                            <input type="text" id="datetime" readonly style="background: #f7f9fc;">
+                        </div>
+
+                        <div style="display: flex; gap: 10px; margin-top: 20px;">
+                            <button type="button" onclick="saveDraft()" class="btn-secondary" style="flex:1;">💾 Save Draft</button>
+                            <button type="button" onclick="showSubmitModal()" class="btn-success" style="flex:2;">✅ Submit Sample</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Samples View -->
+                <div id="samplesView" class="view">
+                    <h2 style="color: var(--qu-primary);">Sample Records</h2>
+                    <div id="samplesContainer" class="sample-grid"></div>
+                </div>
+
+                <!-- Settings -->
+                <div id="settingsView" class="view">
+                    <h2 style="color: var(--qu-primary);">Admin Settings</h2>
+                    <h3 style="margin-top: 20px;">Add Student</h3>
+                    <div style="display: grid; gap: 10px; margin-top: 10px;">
+                        <input type="text" id="newName" placeholder="Name">
+                        <input type="text" id="newUsername" placeholder="Username">
+                        <input type="password" id="newPassword" placeholder="Password (6 digits)">
+                        <select id="newTeam">
+                            <option value="">Select Team</option>
+                            <option value="Team A">Team A</option>
+                            <option value="Team B">Team B</option>
+                            <option value="Team C">Team C</option>
+                            <option value="Team D">Team D</option>
+                        </select>
+                        <button onclick="addStudent()">Add Student</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Submit Modal -->
+    <div id="submitModal" class="modal">
+        <div class="modal-content">
+            <h3 style="color: var(--qu-primary); margin-bottom: 15px;">⚠️ Confirm Submission</h3>
+            <p style="margin: 15px 0;">Are you sure you want to submit this sample?</p>
+            <p style="color: #718096; font-size: 14px; margin-bottom: 20px;"><strong>Once submitted, you cannot edit or delete this sample.</strong></p>
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button type="button" onclick="closeSubmitModal()" class="btn-secondary">Cancel</button>
+                <button type="button" onclick="confirmSubmit()" class="btn-success">Yes, Submit</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // =============================================
+        // GLOBAL STATE
+        // =============================================
+        let currentUser = null;
+        let samples = [];
+        let users = [];
+        let photos = [];
+        let gpsData = null;
+        let sampleCounter = 0;
+
+        // =============================================
+        // INITIALIZE APP
+        // =============================================
+        function init() {
+            console.log('Initializing app...');
+
+            // Load or create users
+            const storedUsers = localStorage.getItem('users');
+            if (storedUsers) {
+                users = JSON.parse(storedUsers);
+            } else {
+                users = [
+                    { id: 1, name: 'Dr. Sulaiman Aljasir', username: 'sulaiman', password: '220150', role: 'admin', team: null },
+                    { id: 2, name: 'Ibrahim', username: 'ibrahim', password: '330160', role: 'admin', team: null },
+                    { id: 3, name: 'Imran', username: 'imran', password: '440170', role: 'admin', team: null }
+                ];
+                localStorage.setItem('users', JSON.stringify(users));
+            }
+
+            // Load samples
+            const storedSamples = localStorage.getItem('samples');
+            samples = storedSamples ? JSON.parse(storedSamples) : [];
+
+            // Load counter
+            const storedCounter = localStorage.getItem('sampleCounter');
+            sampleCounter = storedCounter ? parseInt(storedCounter) : 0;
+
+            console.log('Loaded:', samples.length, 'samples, counter:', sampleCounter);
+
+            // Setup photo input
+            const photoInput = document.getElementById('photoInput');
+            if (photoInput) {
+                photoInput.addEventListener('change', handlePhotos);
+            }
+
+            // Generate initial sample ID and datetime
+            generateSampleId();
+            updateDateTime();
+            setInterval(updateDateTime, 60000); // Update every minute
+
+            // Check auto-login
+            const savedUser = localStorage.getItem('currentUser');
+            if (savedUser) {
+                try {
+                    currentUser = JSON.parse(savedUser);
+                    console.log('Auto-login:', currentUser.username);
+                    document.getElementById('loginView').style.display = 'none';
+                    document.getElementById('appView').style.display = 'block';
+                    showApp();
+                } catch (e) {
+                    console.error('Auto-login failed:', e);
+                    localStorage.removeItem('currentUser');
+                }
+            }
+        }
+
+        // =============================================
+        // LOGIN & LOGOUT
+        // =============================================
+        function handleLogin(e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            const username = document.getElementById('loginUsername').value.trim().toLowerCase();
+            const password = document.getElementById('loginPassword').value.trim();
+
+            console.log('Login attempt - Username:', username, 'Password:', password);
+            console.log('Available users:', users.map(u => u.username + '/' + u.password));
+
+            const user = users.find(u => u.username.toLowerCase() === username && u.password === password);
+
+            if (user) {
+                console.log('Login SUCCESS');
+                currentUser = user;
+                localStorage.setItem('currentUser', JSON.stringify(user));
+                document.getElementById('loginView').style.display = 'none';
+                document.getElementById('appView').style.display = 'block';
+                showApp();
+            } else {
+                console.log('Login FAILED');
+                document.getElementById('loginAlert').innerHTML = '<div class="alert alert-error">❌ Invalid username or password</div>';
+                setTimeout(() => {
+                    document.getElementById('loginAlert').innerHTML = '';
+                }, 3000);
+            }
+
+            return false;
+        }
+
+        function handleLogout() {
+            localStorage.removeItem('currentUser');
+            window.location.reload();
+        }
+
+        function showApp() {
+            console.log('Showing app for:', currentUser.name);
+            document.getElementById('userName').textContent = currentUser.name;
+            if (currentUser.role === 'admin') {
+                document.getElementById('settingsTab').style.display = 'block';
+            }
+            renderSamples();
+        }
+
+        // =============================================
+        // SAMPLE ID GENERATION
+        // =============================================
+        function generateSampleId() {
+            let max = 0;
+            samples.forEach(s => {
+                const match = s.sampleId ? s.sampleId.match(/RM-(\d+)/) : null;
+                if (match) {
+                    const num = parseInt(match[1]);
+                    if (num > max) max = num;
+                }
+            });
+            sampleCounter = max + 1;
+            document.getElementById('sampleId').value = 'RM-' + sampleCounter;
+            localStorage.setItem('sampleCounter', sampleCounter.toString());
+            console.log('Generated sample ID: RM-' + sampleCounter);
+        }
+
+        function updateDateTime() {
+            const now = new Date();
+            document.getElementById('datetime').value = now.toLocaleString('en-US', {
+                weekday: 'short',
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        // =============================================
+        // PHOTO HANDLING
+        // =============================================
+        function openCamera() {
+            document.getElementById('photoInput').click();
+        }
+
+        function handlePhotos(e) {
+            console.log('Files selected:', e.target.files.length);
+            const files = Array.from(e.target.files);
+
+            // Limit to 5 total photos
+            const remainingSlots = 5 - photos.length;
+            const filesToAdd = files.slice(0, remainingSlots);
+
+            console.log('Adding', filesToAdd.length, 'photos. Current count:', photos.length);
+
+            filesToAdd.forEach((file, index) => {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    photos.push(event.target.result);
+                    console.log('Photo added. Total now:', photos.length);
+                    renderPhotoPreview();
+                };
+                reader.readAsDataURL(file);
+            });
+
+            // Reset input so same file can be selected again
+            e.target.value = '';
+        }
+
+        function renderPhotoPreview() {
+            const preview = document.getElementById('photoPreview');
+            const count = document.getElementById('photoCount');
+
+            preview.innerHTML = '';
+
+            photos.forEach((photoData, index) => {
+                const div = document.createElement('div');
+                div.className = 'photo-item';
+                div.innerHTML = `
+                    <img src="${photoData}" alt="Photo ${index + 1}">
+                    <button type="button" class="remove-btn" onclick="removePhoto(${index})">×</button>
+                `;
+                preview.appendChild(div);
+            });
+
+            count.textContent = photos.length + ' / 5 photos';
+            count.style.color = photos.length === 0 ? '#e53e3e' : 'var(--qu-primary)';
+        }
+
+        function removePhoto(index) {
+            console.log('Removing photo', index);
+            photos.splice(index, 1);
+            renderPhotoPreview();
+        }
+
+        // =============================================
+        // GPS CAPTURE
+        // =============================================
+        function captureGPS() {
+            const btn = document.getElementById('gpsBtn');
+            const info = document.getElementById('gpsInfo');
+
+            btn.disabled = true;
+            btn.textContent = '📍 Getting GPS...';
+
+            if (!navigator.geolocation) {
+                alert('❌ GPS not supported on this device');
+                btn.disabled = false;
+                btn.textContent = '📍 Capture GPS';
+                return;
+            }
+
+            navigator.geolocation.getCurrentPosition(
+                function(position) {
+                    const acc = position.coords.accuracy;
+                    console.log('GPS accuracy:', acc);
+
+                    if (acc > 100) {
+                        const proceed = confirm('⚠️ GPS accuracy is ' + Math.round(acc) + 'm (>100m).\n\nWeak signal detected. Do you want to:\n- YES: Save sample without GPS (will update when signal improves)\n- NO: Wait for better signal');
+
+                        if (proceed) {
+                            gpsData = { lat: null, lng: null, acc: null, pending: true };
+                            info.style.display = 'block';
+                            info.style.background = '#feebc8';
+                            info.style.color = '#744210';
+                            info.textContent = '⚠️ GPS Pending (Weak Signal)';
+                            btn.textContent = '⚠️ GPS Pending';
+                        } else {
+                            btn.textContent = '📍 Capture GPS';
+                        }
+                    } else {
+                        gpsData = {
+                            lat: position.coords.latitude,
+                            lng: position.coords.longitude,
+                            acc: acc,
+                            pending: false
+                        };
+                        info.style.display = 'block';
+                        info.style.background = '#c6f6d5';
+                        info.style.color = '#22543d';
+                        info.textContent = '✓ GPS Captured: ' + gpsData.lat.toFixed(4) + ', ' + gpsData.lng.toFixed(4) + ' (±' + Math.round(acc) + 'm)';
+                        btn.textContent = '✓ GPS Captured';
+                    }
+
+                    btn.disabled = false;
+                },
+                function(error) {
+                    console.error('GPS error:', error);
+                    const proceed = confirm('❌ GPS Error: ' + error.message + '\n\nNo GPS signal available. Do you want to:\n- YES: Save sample without GPS (will update when signal available)\n- NO: Try again later');
+
+                    if (proceed) {
+                        gpsData = { lat: null, lng: null, acc: null, pending: true };
+                        info.style.display = 'block';
+                        info.style.background = '#feebc8';
+                        info.style.color = '#744210';
+                        info.textContent = '⚠️ No GPS Signal';
+                        btn.textContent = '⚠️ No GPS';
+                    } else {
+                        btn.textContent = '📍 Capture GPS';
+                    }
+
+                    btn.disabled = false;
+                },
+                {
+                    enableHighAccuracy: true,
+                    timeout: 15000,
+                    maximumAge: 0
+                }
+            );
+        }
+
+        // =============================================
+        // SAVE DRAFT
+        // =============================================
+        function saveDraft() {
+            const animal = document.getElementById('animalType').value;
+            const source = document.getElementById('sourceType').value;
+
+            if (!animal || !source) {
+                alert('❌ Please select at least Animal Type and Source Type to save draft');
+                return;
+            }
+
+            const draft = {
+                id: Date.now(),
+                sampleId: document.getElementById('sampleId').value,
+                animalType: animal,
+                sourceType: source,
+                healthStatus: document.getElementById('healthStatus').value,
+                notes: document.getElementById('notes').value,
+                photos: [...photos], // Clone array
+                gps: gpsData ? {...gpsData} : null, // Clone object
+                collectedBy: currentUser.name,
+                team: currentUser.team || null,
+                timestamp: new Date().toISOString(),
+                status: 'draft'
+            };
+
+            samples.push(draft);
+            localStorage.setItem('samples', JSON.stringify(samples));
+
+            console.log('Draft saved:', draft.sampleId);
+            alert('✅ Draft saved! You can submit it later.');
+
+            // Don't reset form for draft
+        }
+
+        // =============================================
+        // SUBMIT SAMPLE
+        // =============================================
+        function showSubmitModal() {
+            const animal = document.getElementById('animalType').value;
+            const source = document.getElementById('sourceType').value;
+            const health = document.getElementById('healthStatus').value;
+
+            if (!animal || !source || !health) {
+                alert('❌ Please fill all required fields (Animal Type, Source Type, Health Status)');
+                return;
+            }
+
+            if (!gpsData) {
+                alert('❌ Please capture GPS location first (or accept weak signal option)');
+                return;
+            }
+
+            if (photos.length === 0) {
+                alert('❌ Please take at least 1 photo (3-5 recommended)');
+                return;
+            }
+
+            console.log('Opening submit modal');
+            document.getElementById('submitModal').classList.add('show');
+        }
+
+        function closeSubmitModal() {
+            console.log('Closing submit modal');
+            document.getElementById('submitModal').classList.remove('show');
+        }
+
+        function confirmSubmit() {
+            console.log('CONFIRM SUBMIT CALLED');
+
+            const sample = {
+                id: Date.now(),
+                sampleId: document.getElementById('sampleId').value,
+                animalType: document.getElementById('animalType').value,
+                sourceType: document.getElementById('sourceType').value,
+                healthStatus: document.getElementById('healthStatus').value,
+                notes: document.getElementById('notes').value,
+                photos: [...photos], // Clone array
+                gps: gpsData ? {...gpsData} : null, // Clone object
+                collectedBy: currentUser.name,
+                team: currentUser.team || null,
+                timestamp: new Date().toISOString(),
+                datetime: document.getElementById('datetime').value,
+                status: 'submitted'
+            };
+
+            console.log('Submitting sample:', sample.sampleId);
+
+            samples.push(sample);
+            localStorage.setItem('samples', JSON.stringify(samples));
+
+            // Increment counter for next sample
+            sampleCounter++;
+            localStorage.setItem('sampleCounter', sampleCounter.toString());
+
+            console.log('Sample saved. Total samples:', samples.length);
+
+            closeSubmitModal();
+            alert('✅ Sample submitted successfully!');
+
+            // Reset form completely
+            document.getElementById('sampleForm').reset();
+            photos = [];
+            gpsData = null;
+            renderPhotoPreview();
+            document.getElementById('gpsInfo').style.display = 'none';
+            document.getElementById('gpsBtn').textContent = '📍 Capture GPS';
+            document.getElementById('gpsBtn').disabled = false;
+            generateSampleId();
+            updateDateTime();
+
+            // Switch to samples view to show the new sample
+            switchToTab('samples');
+        }
+
+        // =============================================
+        // RENDER SAMPLES
+        // =============================================
+        function renderSamples() {
+            const container = document.getElementById('samplesContainer');
+
+            if (samples.length === 0) {
+                container.innerHTML = '<p style="color: #718096; text-align: center; padding: 40px;">No samples collected yet</p>';
+                return;
+            }
+
+            let filtered = [...samples];
+            if (currentUser && currentUser.role !== 'admin') {
+                filtered = filtered.filter(s => s.team === currentUser.team);
+            }
+
+            // Sort newest first
+            filtered.sort((a, b) => {
+                const aNum = parseInt(a.sampleId.replace('RM-', ''));
+                const bNum = parseInt(b.sampleId.replace('RM-', ''));
+                return bNum - aNum;
+            });
+
+            container.innerHTML = filtered.map(s => `
+                <div class="sample-card">
+                    <h3 style="color: var(--qu-primary); margin-bottom: 15px;">${s.sampleId}</h3>
+                    <p style="margin: 5px 0;"><strong>Status:</strong> ${s.status === 'submitted' ? '✅ Submitted' : '⚠️ Draft'}</p>
+                    <p style="margin: 5px 0;"><strong>Animal:</strong> ${s.animalType}</p>
+                    <p style="margin: 5px 0;"><strong>Source:</strong> ${s.sourceType}</p>
+                    <p style="margin: 5px 0;"><strong>Health:</strong> ${s.healthStatus}</p>
+                    <p style="margin: 5px 0;"><strong>Collected by:</strong> ${s.collectedBy}</p>
+                    ${s.team ? '<p style="margin: 5px 0;"><strong>Team:</strong> ' + s.team + '</p>' : ''}
+                    <p style="margin: 5px 0;"><strong>Photos:</strong> ${s.photos ? s.photos.length : 0}</p>
+                    ${s.gps && s.gps.lat ? '<p style="margin: 5px 0;"><strong>GPS:</strong> ' + s.gps.lat.toFixed(4) + ', ' + s.gps.lng.toFixed(4) + '</p>' : ''}
+                    ${s.gps && s.gps.pending ? '<p style="margin: 5px 0; color: #dd6b20;">⚠️ GPS Pending</p>' : ''}
+                    <p style="margin: 5px 0; font-size: 12px; color: #718096;">${s.datetime || new Date(s.timestamp).toLocaleString()}</p>
+                </div>
+            `).join('');
+
+            console.log('Rendered', filtered.length, 'samples');
+        }
+
+        // =============================================
+        // TAB NAVIGATION
+        // =============================================
+        function switchTab(event, tabName) {
+            console.log('Switching to tab:', tabName);
+
+            // Update tabs
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            if (event && event.target) {
+                event.target.classList.add('active');
+            }
+
+            // Update views
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            const targetView = document.getElementById(tabName + 'View');
+            if (targetView) {
+                targetView.classList.add('active');
+            }
+
+            if (tabName === 'samples') {
+                renderSamples();
+            }
+        }
+
+        function switchToTab(tabName) {
+            // Programmatic tab switch
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach((tab, index) => {
+                if ((tabName === 'collect' && index === 0) ||
+                    (tabName === 'samples' && index === 1) ||
+                    (tabName === 'settings' && index === 2)) {
+                    tab.classList.add('active');
+                } else {
+                    tab.classList.remove('active');
+                }
+            });
+
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.getElementById(tabName + 'View').classList.add('active');
+
+            if (tabName === 'samples') {
+                renderSamples();
+            }
+        }
+
+        // =============================================
+        // ADD STUDENT
+        // =============================================
+        function addStudent() {
+            if (!currentUser || currentUser.role !== 'admin') {
+                alert('❌ Admin access required');
+                return;
+            }
+
+            const name = document.getElementById('newName').value.trim();
+            const username = document.getElementById('newUsername').value.trim();
+            const password = document.getElementById('newPassword').value.trim();
+            const team = document.getElementById('newTeam').value;
+
+            if (!name || !username || !password || !team) {
+                alert('❌ Please fill all fields');
+                return;
+            }
+
+            if (users.find(u => u.username.toLowerCase() === username.toLowerCase())) {
+                alert('❌ Username already exists');
+                return;
+            }
+
+            const newUser = {
+                id: Date.now(),
+                name: name,
+                username: username.toLowerCase(),
+                password: password,
+                role: 'student',
+                team: team
+            };
+
+            users.push(newUser);
+            localStorage.setItem('users', JSON.stringify(users));
+
+            alert('✅ Student added: ' + name + ' (Team ' + team + ')');
+
+            document.getElementById('newName').value = '';
+            document.getElementById('newUsername').value = '';
+            document.getElementById('newPassword').value = '';
+            document.getElementById('newTeam').value = '';
+        }
+
+        // =============================================
+        // START APPLICATION
+        // =============================================
+        console.log('Script loaded');
+        window.addEventListener('load', function() {
+            console.log('Window loaded, initializing...');
+            init();
+        });
+    </script>
+</body>
+</html>
