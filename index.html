@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Raw Milk Project</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, sans-serif; background: #f7f9fc; line-height: 1.6; }
+        .header { background: linear-gradient(135deg, #2563EB, #1E40AF); color: white; padding: 20px; text-align: center; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .card { background: white; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); padding: 30px; margin-bottom: 20px; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-weight: 600; font-size: 14px; }
+        input, select, textarea { width: 100%; padding: 14px; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 16px; }
+        button { background: #2563EB; color: white; padding: 14px 28px; border: none; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; }
+        button:hover { background: #1E40AF; }
+        button:disabled { background: #cbd5e0; cursor: not-allowed; }
+        .btn-success { background: #38a169; }
+        .btn-secondary { background: #60A5FA; }
+        .btn-danger { background: #e53e3e; }
+        .btn-warning { background: #dd6b20; }
+        .btn-small { padding: 8px 16px; font-size: 14px; margin-right: 5px; }
+        input[type="file"] { display: none; }
+        .photo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; margin-top: 10px; }
+        .photo-item { position: relative; border: 2px solid #e2e8f0; border-radius: 8px; overflow: hidden; }
+        .photo-item img { width: 100%; height: 100px; object-fit: cover; }
+        .photo-item button { position: absolute; top: 5px; right: 5px; background: #e53e3e; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; padding: 0; font-size: 16px; }
+        .modal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); align-items: center; justify-content: center; }
+        .modal.active { display: flex !important; }
+        .modal-content { background: white; padding: 30px; border-radius: 16px; max-width: 500px; width: 90%; }
+        .sample-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; margin-top: 20px; }
+        .sample-card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .sample-card.draft { border-left: 4px solid #dd6b20; background: #fffaf0; }
+        .sample-card.submitted { border-left: 4px solid #38a169; }
+        .tab-container { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #e2e8f0; }
+        .tab { background: transparent; color: #718096; padding: 12px 24px; border: none; border-bottom: 3px solid transparent; cursor: pointer; }
+        .tab.active { color: #2563EB; border-bottom-color: #2563EB; }
+        .view { display: none; }
+        .view.active { display: block; }
+        .alert { padding: 14px; border-radius: 10px; margin-bottom: 20px; }
+        .alert-error { background: #fed7d7; color: #742a2a; }
+        .alert-warning { background: #feebc8; color: #744210; }
+    </style>
+</head>
+<body>
+    <div class="header"><h1>Raw Milk Project</h1><p>Qassim University</p></div>
+
+    <div id="loginView">
+        <div class="container">
+            <div class="card" style="max-width: 450px; margin: 40px auto;">
+                <h2 style="color: #2563EB; margin-bottom: 25px;">Login</h2>
+                <div id="loginAlert"></div>
+                <div class="form-group"><label>Username</label><input type="text" id="loginUsername"></div>
+                <div class="form-group"><label>Password</label><input type="password" id="loginPassword"></div>
+                <button onclick="doLogin()" style="width: 100%;">Login</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="appView" style="display: none;">
+        <div class="container">
+            <div style="background: #2563EB; color: white; padding: 15px; border-radius: 10px; margin-bottom: 20px; display: flex; justify-content: space-between;">
+                <span id="userName"></span>
+                <button onclick="doLogout()" class="btn-danger">Logout</button>
+            </div>
+
+            <div class="card">
+                <div class="tab-container">
+                    <button class="tab active" onclick="goTab('collect')">📝 Collect</button>
+                    <button class="tab" onclick="goTab('samples')">📊 Samples</button>
+                    <button class="tab" id="settingsTab" onclick="goTab('settings')" style="display:none;">⚙️ Settings</button>
+                </div>
+
+                <div id="collectView" class="view active">
+                    <h2 style="color: #2563EB;">New Sample</h2>
+                    <div id="draftWarning"></div>
+                    <div class="form-group">
+                        <label>Sample ID</label>
+                        <input type="text" id="sampleId" readonly style="background: #f7f9fc; font-weight: bold; color: #2563EB;">
+                    </div>
+                    <div class="form-group"><label>Animal Type *</label>
+                        <select id="animalType"><option value="">Select</option><option value="Camel">Camel</option><option value="Sheep">Sheep</option><option value="Goat">Goat</option></select>
+                    </div>
+                    <div class="form-group"><label>Source Type *</label>
+                        <select id="sourceType"><option value="">Select</option><option value="Farm">Farm</option><option value="Free-ranging">Free-ranging</option></select>
+                    </div>
+                    <div class="form-group"><label>Health Status *</label>
+                        <select id="healthStatus"><option value="">Select</option><option value="Healthy">Healthy</option><option value="Diseased">Diseased</option></select>
+                    </div>
+                    <div class="form-group"><label>Notes</label><textarea id="notes" rows="3"></textarea></div>
+                    <div class="form-group">
+                        <label>Photos (1-5) *</label>
+                        <input type="file" id="photoInput" accept="image/*" capture="environment" multiple>
+                        <button type="button" onclick="openCamera()">📸 Take Photos</button>
+                        <div id="photoPreview" class="photo-grid"></div>
+                        <p id="photoCount" style="margin-top: 8px; font-size: 13px; color: #2563EB;"></p>
+                    </div>
+                    <div class="form-group">
+                        <label>GPS Location *</label>
+                        <button type="button" id="gpsBtn" onclick="captureGPS()">📍 Capture GPS</button>
+                        <div id="gpsInfo" style="display:none; margin-top:10px; padding:10px; background:#c6f6d5; border-radius:8px;"></div>
+                    </div>
+                    <div class="form-group"><label>Date & Time</label><input type="text" id="datetime" readonly style="background: #f7f9fc;"></div>
+                    <div style="display: flex; gap: 10px; margin-top: 20px;">
+                        <button type="button" onclick="saveDraft()" class="btn-secondary" style="flex:1;">💾 Save Draft</button>
+                        <button type="button" onclick="submitSample()" class="btn-success" style="flex:2;">✅ Submit Sample</button>
+                    </div>
+                </div>
+
+                <div id="samplesView" class="view">
+                    <h2 style="color: #2563EB;">Samples</h2>
+                    <div style="margin: 15px 0;">
+                        <label style="display: inline; margin-right: 10px;"><input type="checkbox" id="showDrafts" onchange="showSamples()" checked> Drafts</label>
+                        <label style="display: inline;"><input type="checkbox" id="showSubmitted" onchange="showSamples()" checked> Submitted</label>
+                    </div>
+                    <div id="samplesContainer" class="sample-grid"></div>
+                </div>
+
+                <div id="settingsView" class="view">
+                    <h2 style="color: #2563EB;">Settings</h2>
+                    <h3 style="margin-top: 20px;">Add Student</h3>
+                    <input type="text" id="newName" placeholder="Name" style="margin-bottom: 10px;">
+                    <input type="text" id="newUsername" placeholder="Username" style="margin-bottom: 10px;">
+                    <input type="password" id="newPassword" placeholder="Password" style="margin-bottom: 10px;">
+                    <select id="newTeam" style="margin-bottom: 10px;"><option value="">Team</option><option value="Team A">Team A</option><option value="Team B">Team B</option><option value="Team C">Team C</option><option value="Team D">Team D</option></select>
+                    <button onclick="addStudent()">Add</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="submitModal" class="modal">
+        <div class="modal-content">
+            <h3 style="color: #2563EB; margin-bottom: 15px;">⚠️ Confirm</h3>
+            <p style="margin: 15px 0;">Submit this sample?</p>
+            <p style="color: #718096; font-size: 14px; margin-bottom: 20px;"><strong>Cannot edit after submit.</strong></p>
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button type="button" onclick="cancelSubmit()">Cancel</button>
+                <button type="button" onclick="confirmSubmit()" class="btn-success">Yes, Submit</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        var user = null, samples = [], users = [], photos = [], gps = null, reservedId = null, editDraftId = null, nextNum = 1;
+
+        function init() {
+            users = JSON.parse(localStorage.getItem('users')) || [
+                {id:1, name:'Dr. Sulaiman Aljasir', username:'sulaiman', password:'220150', role:'admin', team:null},
+                {id:2, name:'Ibrahim', username:'ibrahim', password:'330160', role:'admin', team:null},
+                {id:3, name:'Imran', username:'imran', password:'440170', role:'admin', team:null}
+            ];
+            localStorage.setItem('users', JSON.stringify(users));
+
+            samples = JSON.parse(localStorage.getItem('samples')) || [];
+
+            // Calculate next number
+            nextNum = 1;
+            samples.forEach(function(s) {
+                var m = s.sampleId.match(/RM-(\d+)/);
+                if (m && parseInt(m[1]) >= nextNum) nextNum = parseInt(m[1]) + 1;
+            });
+
+            document.getElementById('photoInput').addEventListener('change', handlePhotos);
+            updateTime();
+            setInterval(updateTime, 60000);
+
+            var saved = localStorage.getItem('currentUser');
+            if (saved) {
+                user = JSON.parse(saved);
+                document.getElementById('loginView').style.display = 'none';
+                document.getElementById('appView').style.display = 'block';
+                showApp();
+            }
+        }
+
+        function doLogin() {
+            var u = document.getElementById('loginUsername').value.trim().toLowerCase();
+            var p = document.getElementById('loginPassword').value.trim();
+            var found = users.find(function(x) { return x.username === u && x.password === p; });
+
+            if (found) {
+                user = found;
+                localStorage.setItem('currentUser', JSON.stringify(user));
+                document.getElementById('loginView').style.display = 'none';
+                document.getElementById('appView').style.display = 'block';
+                showApp();
+            } else {
+                document.getElementById('loginAlert').innerHTML = '<div class="alert alert-error">❌ Invalid</div>';
+            }
+        }
+
+        function doLogout() { localStorage.clear(); location.reload(); }
+
+        function showApp() {
+            document.getElementById('userName').textContent = user.name;
+            if (user.role === 'admin') document.getElementById('settingsTab').style.display = 'block';
+            reserveId();
+            showSamples();
+        }
+
+        function reserveId() {
+            reservedId = 'RM-' + nextNum;
+            document.getElementById('sampleId').value = reservedId;
+        }
+
+        function updateTime() {
+            document.getElementById('datetime').value = new Date().toLocaleString();
+        }
+
+        function openCamera() { document.getElementById('photoInput').click(); }
+
+        function handlePhotos(e) {
+            var files = Array.from(e.target.files);
+            var remain = 5 - photos.length;
+            files.slice(0, remain).forEach(function(f) {
+                var r = new FileReader();
+                r.onload = function(ev) {
+                    photos.push(ev.target.result);
+                    showPhotos();
+                };
+                r.readAsDataURL(f);
+            });
+            e.target.value = '';
+        }
+
+        function showPhotos() {
+            var p = document.getElementById('photoPreview');
+            var c = document.getElementById('photoCount');
+            p.innerHTML = '';
+            photos.forEach(function(d, i) {
+                var div = document.createElement('div');
+                div.className = 'photo-item';
+                div.innerHTML = '<img src="'+d+'"><button type="button" onclick="removePhoto('+i+')">×</button>';
+                p.appendChild(div);
+            });
+            c.textContent = photos.length + ' / 5';
+        }
+
+        function removePhoto(i) { photos.splice(i, 1); showPhotos(); }
+
+        function captureGPS() {
+            var btn = document.getElementById('gpsBtn');
+            var info = document.getElementById('gpsInfo');
+            btn.disabled = true;
+            btn.textContent = '📍 Getting...';
+
+            if (!navigator.geolocation) {
+                alert('GPS not supported');
+                btn.disabled = false;
+                btn.textContent = '📍 Capture GPS';
+                return;
+            }
+
+            navigator.geolocation.getCurrentPosition(
+                function(p) {
+                    var a = p.coords.accuracy;
+                    if (a > 100) {
+                        if (confirm('Weak GPS ('+Math.round(a)+'m). Continue?')) {
+                            gps = {lat:null, lng:null, pending:true};
+                            info.style.display='block';
+                            info.style.background='#feebc8';
+                            info.textContent='⚠️ Pending';
+                            btn.textContent='⚠️ Pending';
+                        } else {
+                            btn.textContent='📍 Capture GPS';
+                        }
+                    } else {
+                        gps = {lat:p.coords.latitude, lng:p.coords.longitude, acc:a};
+                        info.style.display='block';
+                        info.style.background='#c6f6d5';
+                        info.textContent='✓ GPS: '+gps.lat.toFixed(4)+', '+gps.lng.toFixed(4);
+                        btn.textContent='✓ Captured';
+                    }
+                    btn.disabled=false;
+                },
+                function(err) {
+                    if (confirm('GPS Error. Continue without?')) {
+                        gps = {lat:null, lng:null, pending:true};
+                        info.style.display='block';
+                        info.textContent='⚠️ No GPS';
+                        btn.textContent='⚠️ No GPS';
+                    } else {
+                        btn.textContent='📍 Capture GPS';
+                    }
+                    btn.disabled=false;
+                },
+                {enableHighAccuracy:true, timeout:15000}
+            );
+        }
+
+        function saveDraft() {
+            var a = document.getElementById('animalType').value;
+            var s = document.getElementById('sourceType').value;
+            if (!a || !s) { alert('❌ Fill Animal & Source'); return; }
+
+            var d = {
+                id: editDraftId || Date.now(),
+                sampleId: reservedId,
+                animalType: a,
+                sourceType: s,
+                healthStatus: document.getElementById('healthStatus').value,
+                notes: document.getElementById('notes').value,
+                photos: photos.slice(),
+                gps: gps,
+                collectedBy: user.name,
+                team: user.team,
+                timestamp: new Date().toISOString(),
+                datetime: document.getElementById('datetime').value,
+                status: 'draft'
+            };
+
+            if (editDraftId) {
+                var idx = samples.findIndex(function(x) { return x.id === editDraftId; });
+                if (idx >= 0) samples[idx] = d;
+            } else {
+                samples.push(d);
+            }
+
+            localStorage.setItem('samples', JSON.stringify(samples));
+            alert('✅ Draft saved: ' + reservedId);
+            resetForm();
+        }
+
+        function submitSample() {
+            var a = document.getElementById('animalType').value;
+            var s = document.getElementById('sourceType').value;
+            var h = document.getElementById('healthStatus').value;
+
+            if (!a || !s || !h) { alert('❌ Fill all fields'); return; }
+            if (!gps) { alert('❌ Capture GPS'); return; }
+            if (photos.length === 0) { alert('❌ Take photos'); return; }
+
+            document.getElementById('submitModal').classList.add('active');
+        }
+
+        function cancelSubmit() {
+            document.getElementById('submitModal').classList.remove('active');
+        }
+
+        function confirmSubmit() {
+            var sample = {
+                id: editDraftId || Date.now(),
+                sampleId: reservedId,
+                animalType: document.getElementById('animalType').value,
+                sourceType: document.getElementById('sourceType').value,
+                healthStatus: document.getElementById('healthStatus').value,
+                notes: document.getElementById('notes').value,
+                photos: photos.slice(),
+                gps: gps,
+                collectedBy: user.name,
+                team: user.team,
+                timestamp: new Date().toISOString(),
+                datetime: document.getElementById('datetime').value,
+                status: 'submitted'
+            };
+
+            if (editDraftId) {
+                var idx = samples.findIndex(function(x) { return x.id === editDraftId; });
+                if (idx >= 0) samples[idx] = sample;
+            } else {
+                samples.push(sample);
+            }
+
+            localStorage.setItem('samples', JSON.stringify(samples));
+            document.getElementById('submitModal').classList.remove('active');
+
+            // INCREMENT for next sample
+            nextNum++;
+
+            alert('✅ Sample submitted: ' + reservedId);
+            resetForm();
+            goTab('samples');
+        }
+
+        function resetForm() {
+            document.getElementById('animalType').value = '';
+            document.getElementById('sourceType').value = '';
+            document.getElementById('healthStatus').value = '';
+            document.getElementById('notes').value = '';
+            photos = [];
+            gps = null;
+            editDraftId = null;
+            showPhotos();
+            document.getElementById('gpsInfo').style.display = 'none';
+            document.getElementById('gpsBtn').textContent = '📍 Capture GPS';
+            document.getElementById('gpsBtn').disabled = false;
+            document.getElementById('draftWarning').innerHTML = '';
+            reserveId();
+            updateTime();
+        }
+
+        function loadDraft(id) {
+            var d = samples.find(function(x) { return x.id === id; });
+            if (!d) return;
+
+            editDraftId = d.id;
+            reservedId = d.sampleId;
+            document.getElementById('sampleId').value = d.sampleId;
+            document.getElementById('animalType').value = d.animalType;
+            document.getElementById('sourceType').value = d.sourceType;
+            document.getElementById('healthStatus').value = d.healthStatus;
+            document.getElementById('notes').value = d.notes;
+            photos = d.photos ? d.photos.slice() : [];
+            gps = d.gps;
+            showPhotos();
+
+            if (gps && gps.lat) {
+                var info = document.getElementById('gpsInfo');
+                info.style.display = 'block';
+                info.style.background = '#c6f6d5';
+                info.textContent = '✓ GPS: ' + gps.lat.toFixed(4);
+                document.getElementById('gpsBtn').textContent = '✓ Captured';
+            }
+
+            goTab('collect');
+            alert('📝 Draft loaded');
+        }
+
+        function deleteDraft(id) {
+            if (!confirm('Delete draft?')) return;
+            samples = samples.filter(function(x) { return x.id !== id; });
+            localStorage.setItem('samples', JSON.stringify(samples));
+            showSamples();
+            alert('✅ Deleted');
+        }
+
+        function submitDraftDirect(id) {
+            var d = samples.find(function(x) { return x.id === id; });
+            if (!d) return;
+            d.status = 'submitted';
+            d.timestamp = new Date().toISOString();
+            localStorage.setItem('samples', JSON.stringify(samples));
+            alert('✅ Submitted: ' + d.sampleId);
+            showSamples();
+        }
+
+        function showSamples() {
+            var c = document.getElementById('samplesContainer');
+            var showD = document.getElementById('showDrafts').checked;
+            var showS = document.getElementById('showSubmitted').checked;
+
+            var filtered = samples.filter(function(s) {
+                if (s.status === 'draft' && !showD) return false;
+                if (s.status === 'submitted' && !showS) return false;
+                if (user.role !== 'admin' && s.team !== user.team) return false;
+                return true;
+            });
+
+            if (filtered.length === 0) {
+                c.innerHTML = '<p style="text-align:center;color:#718096;padding:40px;">No samples</p>';
+                return;
+            }
+
+            filtered.sort(function(a, b) {
+                var an = parseInt(a.sampleId.replace('RM-', ''));
+                var bn = parseInt(b.sampleId.replace('RM-', ''));
+                return bn - an;
+            });
+
+            c.innerHTML = filtered.map(function(s) {
+                var isDraft = s.status === 'draft';
+                var acts = '';
+                if (isDraft) {
+                    acts = '<div style="margin-top:15px;display:flex;gap:8px;">'+
+                        '<button type="button" onclick="loadDraft('+s.id+')" class="btn-small btn-secondary">✏️ Edit</button>'+
+                        '<button type="button" onclick="submitDraftDirect('+s.id+')" class="btn-small btn-success">✅ Submit</button>'+
+                        '<button type="button" onclick="deleteDraft('+s.id+')" class="btn-small btn-danger">🗑️ Delete</button>'+
+                        '</div>';
+                }
+
+                return '<div class="sample-card '+(isDraft?'draft':'submitted')+'">'+
+                    '<h3 style="color:#2563EB;margin-bottom:15px;">'+s.sampleId+'</h3>'+
+                    '<p><strong>Status:</strong> '+(isDraft?'⚠️ Draft':'✅ Submitted')+'</p>'+
+                    '<p><strong>Animal:</strong> '+s.animalType+'</p>'+
+                    '<p><strong>Source:</strong> '+s.sourceType+'</p>'+
+                    (s.healthStatus ? '<p><strong>Health:</strong> '+s.healthStatus+'</p>' : '')+
+                    '<p><strong>By:</strong> '+s.collectedBy+'</p>'+
+                    (s.team ? '<p><strong>Team:</strong> '+s.team+'</p>' : '')+
+                    '<p><strong>Photos:</strong> '+(s.photos?s.photos.length:0)+'</p>'+
+                    (s.gps && s.gps.lat ? '<p><strong>GPS:</strong> '+s.gps.lat.toFixed(4)+', '+s.gps.lng.toFixed(4)+'</p>' : '')+
+                    (s.gps && s.gps.pending ? '<p style="color:#dd6b20;">⚠️ GPS Pending</p>' : '')+
+                    '<p style="font-size:12px;color:#718096;margin-top:10px;">'+(s.datetime||new Date(s.timestamp).toLocaleString())+'</p>'+
+                    acts+
+                    '</div>';
+            }).join('');
+        }
+
+        function goTab(name) {
+            document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
+            document.querySelectorAll('.view').forEach(function(v) { v.classList.remove('active'); });
+
+            if (name === 'collect') {
+                document.querySelectorAll('.tab')[0].classList.add('active');
+                document.getElementById('collectView').classList.add('active');
+            } else if (name === 'samples') {
+                document.querySelectorAll('.tab')[1].classList.add('active');
+                document.getElementById('samplesView').classList.add('active');
+                showSamples();
+            } else if (name === 'settings') {
+                document.querySelectorAll('.tab')[2].classList.add('active');
+                document.getElementById('settingsView').classList.add('active');
+            }
+        }
+
+        function addStudent() {
+            var n = document.getElementById('newName').value.trim();
+            var u = document.getElementById('newUsername').value.trim();
+            var p = document.getElementById('newPassword').value.trim();
+            var t = document.getElementById('newTeam').value;
+
+            if (!n || !u || !p || !t) { alert('Fill all'); return; }
+            if (users.find(function(x) { return x.username === u; })) { alert('Username exists'); return; }
+
+            users.push({id:Date.now(), name:n, username:u.toLowerCase(), password:p, role:'student', team:t});
+            localStorage.setItem('users', JSON.stringify(users));
+            alert('✅ Added: ' + n);
+
+            document.getElementById('newName').value = '';
+            document.getElementById('newUsername').value = '';
+            document.getElementById('newPassword').value = '';
+            document.getElementById('newTeam').value = '';
+        }
+
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>
